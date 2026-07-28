@@ -202,3 +202,18 @@ export const invoiceSchema = z.object({
     .nullable(),
 
 });
+export const driverAssignmentSchema = z.object({
+  bookingId: z.number().int().positive(),
+
+  driverId: z.number().int().positive(),
+
+  vehicleId: z.number().int().positive(),
+
+  pickupLocation: z.string().optional(),
+
+  dropoffLocation: z.string().optional(),
+
+  pickupTime: z.coerce.date().optional(),
+
+  completedAt: z.coerce.date().optional(),
+});
