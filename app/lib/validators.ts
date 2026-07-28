@@ -238,3 +238,22 @@ export const driverSchema = z.object({
     "OFF_DUTY",
   ]).optional(),
 });
+export const paymentTransactionSchema = z.object({
+  paymentId: z.number().int().positive(),
+
+  gateway: z.string().min(2),
+
+  gatewayTransactionId: z.string().min(3),
+
+  amount: z.coerce.number().positive(),
+
+  status: z.enum([
+    "PENDING",
+    "PAID",
+    "FAILED",
+    "REFUNDED",
+    "CANCELLED"
+  ]),
+
+  gatewayResponse: z.string().optional(),
+});
