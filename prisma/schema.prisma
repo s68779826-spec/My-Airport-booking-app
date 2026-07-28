@@ -1,0 +1,1355 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//////////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////////
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+//////////////////////////////////////////////////////
+// ROLE
+//////////////////////////////////////////////////////
+
+model Role {
+  id   Int    @id @default(autoincrement())
+  name String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users User[]
+
+  @@map("roles")
+}
+
+//////////////////////////////////////////////////////
+// USER
+//////////////////////////////////////////////////////
+
+model User {
+  id Int @id @default(autoincrement())
+
+  firstName String
+  lastName  String
+
+  email    String @unique
+  password String
+
+  phone String?
+
+  profileImage String?
+
+  roleId Int
+
+  isVerified Boolean @default(false)
+
+  lastLogin DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  role Role @relation(fields: [roleId], references: [id])
+
+  bookings Booking[]
+
+  reviews Review[]
+
+  notifications Notification[]
+
+  auditLogs AuditLog[]
+
+  emailLogs EmailLog[]
+
+  smsLogs SmsLog[]
+
+  blogs Blog[]
+
+  addresses UserAddress[]
+
+  couponUsages    CouponUsage[]
+  testimonials    Testimonial[]
+  contactMessages ContactMessage[]
+
+  @@index([roleId])
+  @@map("users")
+}
+
+//////////////////////////////////////////////////////
+// COUNTRY
+//////////////////////////////////////////////////////
+
+model Country {
+  id Int @id @default(autoincrement())
+
+  name String
+
+  code String @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cities City[]
+
+  airports Airport[]
+
+  addresses UserAddress[]
+
+  @@map("countries")
+}
+
+//////////////////////////////////////////////////////
+// CITY
+//////////////////////////////////////////////////////
+
+model City {
+  id Int @id @default(autoincrement())
+
+  countryId Int
+
+  name String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  country Country @relation(fields: [countryId], references: [id])
+
+  airports Airport[]
+
+  @@index([countryId])
+  @@map("cities")
+}
+
+//////////////////////////////////////////////////////
+// AIRPORT
+//////////////////////////////////////////////////////
+
+model Airport {
+  id Int @id @default(autoincrement())
+
+  countryId Int
+
+  cityId Int
+
+  name String
+
+  iataCode String? @unique
+
+  address String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  country Country @relation(fields: [countryId], references: [id])
+
+  city City @relation(fields: [cityId], references: [id])
+
+  terminals Terminal[]
+
+  services Service[]
+
+  bookings Booking[] @relation("ArrivalAirport")
+
+  departures Booking[] @relation("DepartureAirport")
+
+  serviceCustomerNotes ServiceCustomerNote[]
+
+  passengerCustomerNotes PassengerCustomerNote[]
+
+  airportCustomerNotes AirportCustomerNote[]
+
+  @@index([countryId])
+  @@index([cityId])
+  @@map("airports")
+}
+
+//////////////////////////////////////////////////////
+// TERMINAL
+//////////////////////////////////////////////////////
+
+model Terminal {
+  id Int @id @default(autoincrement())
+
+  airportId Int
+
+  name String
+
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  airport Airport @relation(fields: [airportId], references: [id])
+
+  services Service[]
+
+  bookings Booking[]
+
+  @@index([airportId])
+  @@map("terminals")
+}
+
+//////////////////////////////////////////////////////
+// SERVICE CATEGORY
+//////////////////////////////////////////////////////
+
+model ServiceCategory {
+  id Int @id @default(autoincrement())
+
+  name String
+
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  services Service[]
+
+  @@map("service_categories")
+}
+
+//////////////////////////////////////////////////////
+// SERVICE
+//////////////////////////////////////////////////////
+
+model Service {
+  id Int @id @default(autoincrement())
+
+  categoryId Int
+
+  airportId Int
+
+  terminalId Int
+
+  title String
+
+  description String?
+
+  price Decimal @db.Decimal(10, 2)
+
+  duration Int
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  category ServiceCategory @relation(fields: [categoryId], references: [id])
+
+  airport Airport @relation(fields: [airportId], references: [id])
+
+  terminal Terminal @relation(fields: [terminalId], references: [id])
+
+  images ServiceImage[]
+
+  bookingServices      BookingService[]
+  serviceCustomerNotes ServiceCustomerNote[]
+
+  @@index([categoryId])
+  @@index([airportId])
+  @@index([terminalId])
+  @@map("services")
+}
+
+//////////////////////////////////////////////////////
+// SERVICE IMAGE
+//////////////////////////////////////////////////////
+
+model ServiceImage {
+  id Int @id @default(autoincrement())
+
+  serviceId Int
+
+  imageUrl String
+
+  displayOrder Int @default(1)
+
+  createdAt DateTime @default(now())
+
+  service Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([serviceId])
+  @@map("service_images")
+}
+
+//////////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////////
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum BookingDirection {
+  ARRIVAL
+  DEPARTURE
+  TRANSIT
+}
+
+enum TravelClass {
+  ECONOMY
+  BUSINESS
+  FIRST
+}
+
+//////////////////////////////////////////////////////
+// AIRLINE
+//////////////////////////////////////////////////////
+
+model Airline {
+  id Int @id @default(autoincrement())
+
+  name String
+
+  iataCode String? @unique
+
+  icaoCode String? @unique
+
+  logo String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+
+  @@map("airlines")
+}
+
+//////////////////////////////////////////////////////
+// BOOKING
+//////////////////////////////////////////////////////
+
+model Booking {
+  id Int @id @default(autoincrement())
+
+  userId Int
+
+  airlineId Int
+
+  airportId Int
+
+  terminalId Int
+
+  departureAirportId Int?
+
+  vehicleId Int?
+
+  couponId Int?
+  
+
+  bookingReference String @unique
+
+  arrivalTime DateTime?
+
+  departureTime DateTime?
+
+  flightNumber String?
+
+  specialRequest String?
+
+  bookingDate DateTime
+
+  travelDate DateTime
+
+  bookingDirection BookingDirection
+
+  bookingStatus BookingStatus @default(PENDING)
+
+  totalAmount Decimal @db.Decimal(10, 2)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  ///////////////////////////////////////////
+
+  user User @relation(fields: [userId], references: [id])
+
+  airline Airline @relation(fields: [airlineId], references: [id])
+
+  airport Airport @relation("ArrivalAirport", fields: [airportId], references: [id])
+
+  departureAirport Airport? @relation("DepartureAirport", fields: [departureAirportId], references: [id])
+
+  terminal Terminal @relation(fields: [terminalId], references: [id])
+
+  vehicle Vehicle? @relation(fields: [vehicleId], references: [id])
+
+  coupon Coupon? @relation(fields: [couponId], references: [id])
+
+  ///////////////////////////////////////////
+
+  passengers Passenger[]
+
+  services BookingService[]
+
+  statusHistory BookingStatusHistory[]
+
+  documents BookingDocument[]
+
+  payments Payment?
+
+  invoices Invoice?
+
+  driverAssignments DriverAssignment[]
+
+  reviews Review[]
+
+  couponUsages CouponUsage[]
+
+  emailLogs EmailLog[]
+
+  smsLogs SmsLog[]
+
+  ///////////////////////////////////////////
+
+  @@index([userId])
+  @@index([airlineId])
+  @@index([airportId])
+  @@index([terminalId])
+  @@map("bookings")
+}
+
+//////////////////////////////////////////////////////
+// BOOKING SERVICE
+//////////////////////////////////////////////////////
+
+model BookingService {
+  id Int @id @default(autoincrement())
+
+  bookingId Int
+
+  serviceId Int
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  service Service @relation(fields: [serviceId], references: [id])
+
+  @@unique([bookingId, serviceId])
+  @@index([bookingId])
+  @@index([serviceId])
+  @@map("booking_services")
+}
+
+//////////////////////////////////////////////////////
+// PASSENGER
+//////////////////////////////////////////////////////
+
+model Passenger {
+  id Int @id @default(autoincrement())
+
+  bookingId Int
+
+  firstName String
+
+  lastName String
+
+  age Int?
+
+  gender String?
+
+  phone String?
+
+  email String?
+
+  travelClass TravelClass
+
+  dateOfBirth DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  booking                Booking                 @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  passengerCustomerNotes PassengerCustomerNote[]
+
+  @@index([bookingId])
+  @@map("passengers")
+}
+
+//////////////////////////////////////////////////////
+// BOOKING STATUS HISTORY
+//////////////////////////////////////////////////////
+
+model BookingStatusHistory {
+  id Int @id @default(autoincrement())
+
+  bookingId Int
+
+  oldStatus BookingStatus?
+
+  newStatus BookingStatus
+
+  changedBy Int?
+
+  remarks String?
+
+  changedAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("booking_status_history")
+}
+
+//////////////////////////////////////////////////////
+// BOOKING DOCUMENT
+//////////////////////////////////////////////////////
+
+model BookingDocument {
+  id Int @id @default(autoincrement())
+
+  bookingId Int
+
+  documentType String
+
+  fileName String
+
+  fileUrl String
+
+  uploadedAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@map("booking_documents")
+}
+
+//////////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////////
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  STRIPE
+  PAYPAL
+  BANK_TRANSFER
+}
+
+//////////////////////////////////////////////////////
+// CURRENCY
+//////////////////////////////////////////////////////
+
+model Currency {
+  id Int @id @default(autoincrement())
+
+  code    String  @unique
+  name    String
+  symbol  String?
+  country String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rates    CurrencyRate[]
+  payments Payment[]
+
+  @@map("currencies")
+}
+
+//////////////////////////////////////////////////////
+// CURRENCY RATE
+//////////////////////////////////////////////////////
+
+model CurrencyRate {
+  id Int @id @default(autoincrement())
+
+  currencyId Int
+
+  exchangeRate Decimal @db.Decimal(12, 6)
+
+  effectiveDate DateTime
+
+  createdAt DateTime @default(now())
+
+  currency Currency @relation(fields: [currencyId], references: [id], onDelete: Cascade)
+
+  @@index([currencyId])
+  @@map("currency_rates")
+}
+
+//////////////////////////////////////////////////////
+// PAYMENT
+//////////////////////////////////////////////////////
+
+model Payment {
+  id Int @id @default(autoincrement())
+
+  bookingId Int
+
+  currencyId Int
+
+  amount Decimal @db.Decimal(10, 2)
+
+  paymentMethod PaymentMethod
+
+  paymentStatus PaymentStatus @default(PENDING)
+
+  transactionReference String?
+
+  paidAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  currency Currency @relation(fields: [currencyId], references: [id])
+
+  transactions PaymentTransaction[]
+
+  refunds Refund[]
+
+  @@unique([bookingId])
+  @@index([currencyId])
+  @@map("payments")
+}
+
+//////////////////////////////////////////////////////
+// PAYMENT TRANSACTION
+//////////////////////////////////////////////////////
+
+model PaymentTransaction {
+  id Int @id @default(autoincrement())
+
+  paymentId Int
+
+  gateway String
+
+  gatewayTransactionId String
+
+  amount Decimal @db.Decimal(10, 2)
+
+  status PaymentStatus
+
+  gatewayResponse String?
+
+  createdAt DateTime @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId])
+  @@map("payment_transactions")
+}
+
+//////////////////////////////////////////////////////
+// REFUND
+//////////////////////////////////////////////////////
+
+model Refund {
+  id Int @id @default(autoincrement())
+
+  paymentId Int
+
+  refundAmount Decimal @db.Decimal(10, 2)
+
+  refundReason String?
+
+  refundStatus PaymentStatus
+
+  refundedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+
+  @@index([paymentId])
+  @@map("refunds")
+}
+
+//////////////////////////////////////////////////////
+// INVOICE
+//////////////////////////////////////////////////////
+
+model Invoice {
+  id Int @id @default(autoincrement())
+
+  bookingId Int
+
+  invoiceNumber String @unique
+
+  subtotal Decimal @db.Decimal(10, 2)
+
+  tax Decimal @db.Decimal(10, 2)
+
+  discount Decimal @db.Decimal(10, 2)
+
+  total Decimal @db.Decimal(10, 2)
+
+  pdfUrl String?
+
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@unique([bookingId])
+  @@map("invoices")
+}
+
+//////////////////////////////////////////////////////
+// COUPON
+//////////////////////////////////////////////////////
+
+model Coupon {
+  id Int @id @default(autoincrement())
+
+  code String @unique
+
+  discount Decimal @db.Decimal(10, 2)
+
+  expiryDate DateTime
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  bookings Booking[]
+
+  usages CouponUsage[]
+
+  @@map("coupons")
+}
+
+//////////////////////////////////////////////////////
+// COUPON USAGE
+//////////////////////////////////////////////////////
+
+model CouponUsage {
+  id Int @id @default(autoincrement())
+
+  couponId Int
+
+  bookingId Int
+
+  userId Int
+
+  discountAmount Decimal @db.Decimal(10, 2)
+
+  usedAt DateTime @default(now())
+
+  coupon Coupon @relation(fields: [couponId], references: [id], onDelete: Cascade)
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([couponId, bookingId])
+  @@index([userId])
+  @@map("coupon_usages")
+}
+
+//////////////////////////////////////////////////////
+// ENUMS
+//////////////////////////////////////////////////////
+
+enum DriverStatus {
+  AVAILABLE
+  ASSIGNED
+  OFF_DUTY
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+}
+
+enum NotificationType {
+  BOOKING
+  PAYMENT
+  PROMOTION
+  SYSTEM
+}
+
+//////////////////////////////////////////////////////
+// VEHICLE
+//////////////////////////////////////////////////////
+
+model Vehicle {
+  id Int @id @default(autoincrement())
+
+  name        String
+  model       String?
+  plateNumber String  @unique
+  color       String?
+  capacity    Int?
+
+  status VehicleStatus @default(AVAILABLE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings    Booking[]
+  assignments DriverAssignment[]
+
+  @@map("vehicles")
+}
+
+//////////////////////////////////////////////////////
+// DRIVER
+//////////////////////////////////////////////////////
+
+model Driver {
+  id Int @id @default(autoincrement())
+
+  firstName String
+  lastName  String
+
+  phone String  @unique
+  email String? @unique
+
+  licenseNumber String @unique
+
+  profileImage String?
+
+  status DriverStatus @default(AVAILABLE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  assignments DriverAssignment[]
+
+  @@map("drivers")
+}
+
+//////////////////////////////////////////////////////
+// DRIVER ASSIGNMENT
+//////////////////////////////////////////////////////
+
+model DriverAssignment {
+  id Int @id @default(autoincrement())
+
+  bookingId Int
+
+  driverId Int
+
+  vehicleId Int
+
+  pickupLocation String?
+
+  dropoffLocation String?
+
+  pickupTime DateTime?
+
+  assignedAt DateTime @default(now())
+
+  completedAt DateTime?
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  driver Driver @relation(fields: [driverId], references: [id])
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id])
+
+  @@index([bookingId])
+  @@index([driverId])
+  @@index([vehicleId])
+  @@map("driver_assignments")
+}
+
+//////////////////////////////////////////////////////
+// REVIEW
+//////////////////////////////////////////////////////
+
+model Review {
+  id Int @id @default(autoincrement())
+
+  bookingId Int
+
+  userId Int
+
+  rating Int
+
+  comment String?
+
+  reviewDate DateTime?
+
+  createdAt DateTime @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  testimonial Testimonial?
+
+  @@index([bookingId])
+  @@index([userId])
+  @@map("reviews")
+}
+
+//////////////////////////////////////////////////////
+// TESTIMONIAL
+//////////////////////////////////////////////////////
+
+model Testimonial {
+  id Int @id @default(autoincrement())
+
+  reviewId Int @unique
+
+  userId Int
+
+  customerName String?
+
+  designation String?
+
+  message String
+
+  image String?
+
+  displayOrder Int @default(1)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  review Review @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("testimonials")
+}
+
+//////////////////////////////////////////////////////
+// NOTIFICATION
+//////////////////////////////////////////////////////
+
+model Notification {
+  id Int @id @default(autoincrement())
+
+  userId Int
+
+  type NotificationType
+
+  title String
+
+  message String
+
+  isRead Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("notifications")
+}
+
+//////////////////////////////////////////////////////
+// AUDIT LOG
+//////////////////////////////////////////////////////
+
+model AuditLog {
+  id Int @id @default(autoincrement())
+
+  userId Int?
+
+  action String
+
+  tableName String
+
+  recordId Int
+
+  ipAddress String?
+
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@map("audit_logs")
+}
+
+//////////////////////////////////////////////////////
+// EMAIL LOG
+//////////////////////////////////////////////////////
+
+model EmailLog {
+  id Int @id @default(autoincrement())
+
+  userId Int?
+
+  bookingId Int?
+
+  email String
+
+  subject String
+
+  status String
+
+  sentAt DateTime?
+
+  user User? @relation(fields: [userId], references: [id])
+
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  @@index([userId])
+  @@index([bookingId])
+  @@map("email_logs")
+}
+
+//////////////////////////////////////////////////////
+// SMS LOG
+//////////////////////////////////////////////////////
+
+model SmsLog {
+  id Int @id @default(autoincrement())
+
+  userId Int?
+
+  bookingId Int?
+
+  phone String
+
+  message String
+
+  status String
+
+  sentAt DateTime?
+
+  user User? @relation(fields: [userId], references: [id])
+
+  booking Booking? @relation(fields: [bookingId], references: [id])
+
+  @@index([userId])
+  @@index([bookingId])
+  @@map("sms_logs")
+}
+
+//////////////////////////////////////////////////////
+// BLOG
+//////////////////////////////////////////////////////
+
+model Blog {
+  id Int @id @default(autoincrement())
+
+  authorId Int
+
+  title String
+
+  slug String @unique
+
+  content String
+
+  publishedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  author User @relation(fields: [authorId], references: [id])
+
+  images BlogImage[]
+
+  @@index([authorId])
+  @@map("blogs")
+}
+
+//////////////////////////////////////////////////////
+// BLOG IMAGE
+//////////////////////////////////////////////////////
+
+model BlogImage {
+  id Int @id @default(autoincrement())
+
+  blogId Int
+
+  subtitle String?
+
+  imageUrl String
+
+  createdAt DateTime @default(now())
+
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@index([blogId])
+  @@map("blog_images")
+}
+
+//////////////////////////////////////////////////////
+// FAQ
+//////////////////////////////////////////////////////
+
+model FAQ {
+  id Int @id @default(autoincrement())
+
+  question String
+
+  answer String
+
+  displayOrder Int @default(1)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@map("faqs")
+}
+
+//////////////////////////////////////////////////////
+// CONTACT MESSAGE
+//////////////////////////////////////////////////////
+
+model ContactMessage {
+  id Int @id @default(autoincrement())
+
+  assignedTo Int?
+
+  name String
+
+  email String
+
+  phone String?
+
+  subject String?
+
+  message String
+
+  createdAt DateTime @default(now())
+
+  assignedUser User? @relation(fields: [assignedTo], references: [id])
+
+  @@index([assignedTo])
+  @@map("contact_messages")
+}
+
+//////////////////////////////////////////////////////
+// NEWSLETTER SUBSCRIPTION
+//////////////////////////////////////////////////////
+
+model NewsletterSubscription {
+  id Int @id @default(autoincrement())
+
+  email String @unique
+
+  subscribedAt DateTime @default(now())
+
+  @@map("newsletter_subscriptions")
+}
+
+//////////////////////////////////////////////////////
+// USER ADDRESS
+//////////////////////////////////////////////////////
+
+model UserAddress {
+  id Int @id @default(autoincrement())
+
+  userId Int
+
+  countryId Int
+
+  city String
+
+  state String?
+
+  postalCode String?
+
+  addressLine1 String
+
+  addressLine2 String?
+
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  country Country @relation(fields: [countryId], references: [id])
+
+  @@index([userId])
+  @@index([countryId])
+  @@map("user_addresses")
+}
+
+//////////////////////////////////////////////////////
+// CMS PAGE
+//////////////////////////////////////////////////////
+
+model CMSPage {
+  id Int @id @default(autoincrement())
+
+  title String
+
+  slug String @unique
+
+  content String
+
+  isPublished Boolean @default(true)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@map("cms_pages")
+}
+
+//////////////////////////////////////////////////////
+// TRANSLATION
+//////////////////////////////////////////////////////
+
+model Translation {
+  id Int @id @default(autoincrement())
+
+  languageCode String
+
+  translationKey String
+
+  translationValue String
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([languageCode, translationKey])
+  @@map("translations")
+}
+
+//////////////////////////////////////////////////////
+// SEO METADATA
+//////////////////////////////////////////////////////
+
+model SeoMetadata {
+  id Int @id @default(autoincrement())
+
+  pageName String @unique
+
+  title String
+
+  description String
+
+  keywords String?
+
+  canonicalUrl String?
+
+  ogImage String?
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@map("seo_metadata")
+}
+
+//////////////////////////////////////////////////////
+// GLOBAL SETTINGS
+//////////////////////////////////////////////////////
+
+model GlobalSetting {
+  id Int @id @default(autoincrement())
+
+  siteName String
+
+  supportEmail String?
+
+  supportPhone String?
+
+  defaultCurrency String
+
+  timezone String
+
+  maintenanceMode Boolean @default(false)
+
+  createdAt DateTime @default(now())
+
+  updatedAt DateTime @updatedAt
+
+  @@map("global_settings")
+}
+
+// ============================================================
+// CUSTOMER NOTE
+// ============================================================
+
+model CustomerNote {
+  id   Int    @id @default(autoincrement())
+  text String
+
+  serviceCustomerNotes   ServiceCustomerNote[]
+  passengerCustomerNotes PassengerCustomerNote[]
+  airportCustomerNotes   AirportCustomerNote[]
+
+  @@map("customers_notes")
+}
+
+// ============================================================
+// SERVICE CUSTOMER NOTE
+// ============================================================
+
+model ServiceCustomerNote {
+  serviceId      Int
+  airportId      Int
+  customerNoteId Int
+
+  service      Service      @relation(fields: [serviceId], references: [id])
+  airport      Airport      @relation(fields: [airportId], references: [id])
+  customerNote CustomerNote @relation(fields: [customerNoteId], references: [id])
+
+  @@id([serviceId, airportId, customerNoteId])
+  @@index([serviceId])
+  @@index([airportId])
+  @@index([customerNoteId])
+  @@map("service_customers_notes")
+}
+
+// ============================================================
+// PASSENGER CUSTOMER NOTE
+// ============================================================
+
+model PassengerCustomerNote {
+  passengerId    Int
+  airportId      Int
+  customerNoteId Int
+
+  passenger    Passenger    @relation(fields: [passengerId], references: [id])
+  airport      Airport      @relation(fields: [airportId], references: [id])
+  customerNote CustomerNote @relation(fields: [customerNoteId], references: [id])
+
+  @@id([passengerId, airportId, customerNoteId])
+  @@index([passengerId])
+  @@index([airportId])
+  @@index([customerNoteId])
+  @@map("passengers_customers_notes")
+}
+
+// ============================================================
+// AIRPORT CUSTOMER NOTE
+// ============================================================
+
+model AirportCustomerNote {
+  airportId      Int
+  customerNoteId Int
+
+  airport      Airport      @relation(fields: [airportId], references: [id])
+  customerNote CustomerNote @relation(fields: [customerNoteId], references: [id])
+
+  @@id([airportId, customerNoteId])
+  @@index([airportId])
+  @@index([customerNoteId])
+  @@map("airport_customers_notes")
+}
