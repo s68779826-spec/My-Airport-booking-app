@@ -156,3 +156,49 @@ export const paymentSchema = z.object({
 
   paidAt: z.coerce.date().optional(),
 });
+
+export const invoiceSchema = z.object({
+  bookingId: z
+    .number({
+      message: "Booking ID must be a number",
+    })
+    .int()
+    .positive(),
+
+  invoiceNumber: z
+    .string({
+      message: "Invoice number is required",
+    })
+    .min(3, "Invoice number must be at least 3 characters"),
+
+  subtotal: z
+    .number({
+      message: "Subtotal must be a number",
+    })
+    .nonnegative(),
+
+  tax: z
+    .number({
+      message: "Tax must be a number",
+    })
+    .nonnegative(),
+
+  discount: z
+    .number({
+      message: "Discount must be a number",
+    })
+    .nonnegative(),
+
+  total: z
+    .number({
+      message: "Total must be a number",
+    })
+    .nonnegative(),
+
+  pdfUrl: z
+    .string()
+    .url("Invalid PDF URL")
+    .optional()
+    .nullable(),
+
+});
