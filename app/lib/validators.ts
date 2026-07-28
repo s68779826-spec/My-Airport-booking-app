@@ -217,3 +217,24 @@ export const driverAssignmentSchema = z.object({
 
   completedAt: z.coerce.date().optional(),
 });
+
+
+export const driverSchema = z.object({
+  firstName: z.string().min(2),
+
+  lastName: z.string().min(2),
+
+  phone: z.string().min(11),
+
+  email: z.string().email().optional(),
+
+  licenseNumber: z.string().min(3),
+
+  profileImage: z.string().optional(),
+
+  status: z.enum([
+    "AVAILABLE",
+    "ON_TRIP",
+    "OFF_DUTY",
+  ]).optional(),
+});
