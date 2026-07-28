@@ -233,7 +233,7 @@ const deleteinvoice= await prisma.invoice.delete({
 });
 
 return NextResponse.json(
-  { message: "Coupon deleted successfully", service: deleteinvoice}
+  { message: "Invoice deleted successfully", service: deleteinvoice}
 );
 
 }
