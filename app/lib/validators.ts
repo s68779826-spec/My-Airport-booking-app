@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { is } from "zod/locales";
+import { BookingStatus } from "@prisma/client";
 
 export const registerSchema = z.object({
   firstName: z.string().min(2).max(50).describe("First name is required"),
@@ -259,26 +260,25 @@ export const paymentTransactionSchema = z.object({
 });
 export const bookingStatusHistorySchema = z.object({
   bookingId: z.number().int().positive(),
+  oldStatus: z.nativeEnum(BookingStatus).optional(),
+ newStatus: z.nativeEnum(BookingStatus),
+ changedBy: z.number().int().positive().optional(),
+  remarks: z.string().optional(),
+});
+export const refundSchema = z.object({
+  paymentId: z.number().int().positive(),
 
-  oldStatus: z
-    .enum([
-      "PENDING",
-      "CONFIRMED",
-      "INPROGRESS",
-      "COMPLETED",
-      "CANCELLED",
-    ])
-    .optional(),
+  refundAmount: z.coerce.number().positive(),
 
-  newStatus: z.enum([
+  refundReason: z.string().optional(),
+
+  refundStatus: z.enum([
     "PENDING",
-    "CONFIRMED",
-    "INPROGRESS",
-    "COMPLETED",
+    "PAID",
     "CANCELLED",
+    "FAILED",
+    "REFUNDED"
   ]),
 
-  changedBy: z.number().int().positive().optional(),
-
-  remarks: z.string().optional(),
+  refundedAt: z.coerce.date().optional(),
 });
