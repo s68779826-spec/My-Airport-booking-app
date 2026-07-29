@@ -314,3 +314,16 @@ export const couponUsageSchema = z.object({
   userId: z.number().int().positive(),
   discountAmount: z.coerce.number().positive(),
 });
+export const emailLogSchema = z.object({
+  userId: z.number().int().positive().optional(),
+
+  bookingId: z.number().int().positive().optional(),
+
+  email: z.string().email(),
+
+  subject: z.string().min(1).max(255),
+
+  status: z.string().min(1).max(100),
+
+  sentAt: z.coerce.date().optional(),
+});
