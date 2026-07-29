@@ -327,3 +327,16 @@ export const emailLogSchema = z.object({
 
   sentAt: z.coerce.date().optional(),
 });
+export const smsLogSchema = z.object({
+  userId: z.number().int().positive().optional(),
+
+  bookingId: z.number().int().positive().optional(),
+
+  phone: z.string().min(10).max(20),
+
+  message: z.string().min(1),
+
+  status: z.string().min(1).max(100),
+
+  sentAt: z.coerce.date().optional(),
+});
