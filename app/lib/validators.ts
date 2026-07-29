@@ -282,3 +282,14 @@ export const refundSchema = z.object({
 
   refundedAt: z.coerce.date().optional(),
 });
+export const bookingDocumentSchema = z.object({
+  bookingId: z.number().int().positive(),
+
+  documentType: z.string().min(1),
+
+  fileName: z.string().min(1),
+
+  fileUrl: z.string().url(),
+
+  uploadedAt: z.coerce.date().optional(),
+});
