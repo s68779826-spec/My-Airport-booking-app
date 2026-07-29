@@ -257,3 +257,28 @@ export const paymentTransactionSchema = z.object({
 
   gatewayResponse: z.string().optional(),
 });
+export const bookingStatusHistorySchema = z.object({
+  bookingId: z.number().int().positive(),
+
+  oldStatus: z
+    .enum([
+      "PENDING",
+      "CONFIRMED",
+      "INPROGRESS",
+      "COMPLETED",
+      "CANCELLED",
+    ])
+    .optional(),
+
+  newStatus: z.enum([
+    "PENDING",
+    "CONFIRMED",
+    "INPROGRESS",
+    "COMPLETED",
+    "CANCELLED",
+  ]),
+
+  changedBy: z.number().int().positive().optional(),
+
+  remarks: z.string().optional(),
+});
