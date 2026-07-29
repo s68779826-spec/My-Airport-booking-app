@@ -293,3 +293,18 @@ export const bookingDocumentSchema = z.object({
 
   uploadedAt: z.coerce.date().optional(),
 });
+export const reviewSchema = z.object({
+  bookingId: z.number().int().positive(),
+
+  userId: z.number().int().positive(),
+
+  rating: z
+    .number()
+    .int()
+    .min(1, "Rating must be at least 1")
+    .max(5, "Rating cannot be greater than 5"),
+
+  comment: z.string().optional(),
+
+  reviewDate: z.coerce.date().optional(),
+});
