@@ -308,3 +308,9 @@ export const reviewSchema = z.object({
 
   reviewDate: z.coerce.date().optional(),
 });
+export const couponUsageSchema = z.object({
+  couponId: z.number().int().positive(),
+  bookingId: z.number().int().positive(),
+  userId: z.number().int().positive(),
+  discountAmount: z.coerce.number().positive(),
+});
